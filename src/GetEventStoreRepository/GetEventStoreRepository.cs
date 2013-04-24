@@ -52,13 +52,16 @@ namespace GetEventStoreRepository
             var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
-            var sliceStart = 1; //Ignores $StreamCreated
+            var sliceStart = 0;
             StreamEventsSlice currentSlice;
             do
             {
                 var sliceCount = sliceStart + ReadPageSize <= version
                                     ? ReadPageSize
-                                    : version - sliceStart + 1;
+                                    : version - sliceStart;
+
+                if (sliceCount == 0)
+                    break;
 
                 currentSlice = _eventStoreConnection.ReadStreamEventsForward(streamName, sliceStart, sliceCount, false);
 
@@ -103,7 +106,8 @@ namespace GetEventStoreRepository
             var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.GetUncommittedEvents().Cast<object>().ToList();
             var originalVersion = aggregate.Version - newEvents.Count;
-            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion;
+            //Since JO is 1 based and the ES is 0 based
+            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion - 1;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
             if (eventsToSave.Count < WritePageSize)
