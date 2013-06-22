@@ -149,7 +149,7 @@ namespace GetEventStoreRepository.Tests
         {
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
 
-            var streamName = string.Format("testAggregate-{0}", aggregateId);
+            var streamName = string.Format("testAggregate-{0}", aggregateId.ToString("N"));
             _connection.DeleteStream(streamName, 11);
 
             Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
