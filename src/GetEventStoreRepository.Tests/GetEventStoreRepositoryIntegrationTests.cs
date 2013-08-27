@@ -30,14 +30,14 @@ namespace GetEventStoreRepository.Tests
             return aggregateToSave.Id;
         }
 
-        private EventStoreConnection _connection;
+        private IEventStoreConnection _connection;
         private GetEventStoreRepository _repo;
 
         [SetUp]
         public void SetUp()
         {
-            _connection = EventStoreConnection.Create();
-            _connection.Connect(IntegrationTestTcpEndPoint);
+            _connection = EventStoreConnection.Create(IntegrationTestTcpEndPoint);
+            _connection.Connect();
             _repo = new GetEventStoreRepository(_connection);
         }
 
