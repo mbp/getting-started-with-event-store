@@ -52,7 +52,7 @@ namespace GetEventStoreRepository
             var streamName = _aggregateIdToStreamName(typeof(TAggregate), id);
             var aggregate = ConstructAggregate<TAggregate>();
 
-            var sliceStart = 1; //Ignores $StreamCreated
+            var sliceStart = 0;
             StreamEventsSlice currentSlice;
             do
             {
