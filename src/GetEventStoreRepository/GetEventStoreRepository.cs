@@ -58,7 +58,7 @@ namespace GetEventStoreRepository
             {
                 var sliceCount = sliceStart + ReadPageSize <= version
                                     ? ReadPageSize
-                                    : version - sliceStart + 1;
+                                    : version - sliceStart;
 
                 currentSlice = _eventStoreConnection.ReadStreamEventsForward(streamName, sliceStart, sliceCount, false);
 
@@ -72,7 +72,7 @@ namespace GetEventStoreRepository
 
                 foreach (var evnt in currentSlice.Events)
                     aggregate.ApplyEvent(DeserializeEvent(evnt.OriginalEvent.Metadata, evnt.OriginalEvent.Data));
-            } while (version >= currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
+            } while (version > currentSlice.NextEventNumber && !currentSlice.IsEndOfStream);
 
             if (aggregate.Version != version && version < Int32.MaxValue)
                 throw new AggregateVersionException(id, typeof (TAggregate), aggregate.Version, version);                
@@ -103,7 +103,7 @@ namespace GetEventStoreRepository
             var streamName = _aggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
             var newEvents = aggregate.GetUncommittedEvents().Cast<object>().ToList();
             var originalVersion = aggregate.Version - newEvents.Count;
-            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion;
+            var expectedVersion = originalVersion == 0 ? ExpectedVersion.NoStream : originalVersion-1;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e, commitHeaders)).ToList();
 
             if (eventsToSave.Count < WritePageSize)
