@@ -30,14 +30,14 @@ namespace GetEventStoreRepository.Tests
             return aggregateToSave.Id;
         }
 
-        private EventStoreConnection _connection;
+        private IEventStoreConnection _connection;
         private GetEventStoreRepository _repo;
 
         [SetUp]
         public void SetUp()
         {
-            _connection = EventStoreConnection.Create();
-            _connection.Connect(IntegrationTestTcpEndPoint);
+            _connection = EventStoreConnection.Create(IntegrationTestTcpEndPoint);
+            _connection.Connect();
             _repo = new GetEventStoreRepository(_connection);
         }
 
@@ -150,7 +150,7 @@ namespace GetEventStoreRepository.Tests
             var aggregateId = SaveTestAggregateWithoutCustomHeaders(_repo, 10);
 
             var streamName = string.Format("testAggregate-{0}", aggregateId.ToString("N"));
-            _connection.DeleteStream(streamName, 11);
+            _connection.DeleteStream(streamName, 10);
 
             Assert.Throws<AggregateDeletedException>(() => _repo.GetById<TestAggregate>(aggregateId));
         }
@@ -166,7 +166,7 @@ namespace GetEventStoreRepository.Tests
                 d.Add("CustomHeader2", "CustomValue2");
             });
 
-            var read = _connection.ReadStreamEventsForward(string.Format("aggregate-{0}", aggregateToSave.Id), 1, 20, false);
+            var read = _connection.ReadStreamEventsForward(string.Format("testAggregate-{0}", aggregateToSave.Id.ToString("N")), 1, 20, false);
             foreach (var serializedEvent in read.Events)
             {
                 var parsedMetadata = JObject.Parse(Encoding.UTF8.GetString(serializedEvent.OriginalEvent.Metadata));
